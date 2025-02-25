@@ -24,35 +24,39 @@ router.post("/register",async(req,res)=>{
 
 
 
-//LOGIN
-router.post("/login",async (req,res)=>{
-    try{
-        const user=await User.findOne({email:req.body.email})
-       
-        if(!user){
-            return res.status(404).json("User not found!")
-        }
-        const match=await bcrypt.compare(req.body.password,user.password)
-        
-        if(!match){
-            return res.status(401).json("Wrong credentials!")
-        }
-        const token=jwt.sign({_id:user._id,username:user.username,email:user.email},process.env.SECRET,{expiresIn:"3d"})
-        const {password,...info}=user._doc
-        res.cookie("token",token).status(200).json(info)
+router.post("/login", async (req, res) => {
+    try {
+        const { username, password } = req.body;
 
-    }
-    catch(err){
-        res.status(500).json(err)
-    }
-})
+        // Find user in database
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(401).json({ message: "User not found" });
+        }
 
-res.cookie("token", token, {
-  httpOnly: true,
-  secure: true, // Only in production
-  sameSite: "None", // Needed for cross-origin requests
+        // Check password (assuming bcrypt for hashing)
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Generate token
+        const token = jwt.sign({ userId: user._id }, process.env.SECRET, {
+            expiresIn: "7d",
+        });
+
+        // ✅ Set cookie correctly inside route handler
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true, // Only use in production
+            sameSite: "None",
+        });
+
+        res.status(200).json({ message: "Login successful", user });
+    } catch (err) {
+        res.status(500).json({ message: "Internal server error", error: err });
+    }
 });
-
 
 
 
