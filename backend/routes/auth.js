@@ -23,6 +23,7 @@ router.post("/register",async(req,res)=>{
 })
 
 
+
 //LOGIN
 router.post("/login",async (req,res)=>{
     try{
@@ -45,6 +46,13 @@ router.post("/login",async (req,res)=>{
         res.status(500).json(err)
     }
 })
+
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: true, // Only in production
+  sameSite: "None", // Needed for cross-origin requests
+});
+
 
 
 
