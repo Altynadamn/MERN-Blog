@@ -29,7 +29,7 @@ const allowedOrigins = ["https://finalblog-1.onrender.com"];
 
 app.use(
   cors({
-    origin: allowedOrigins, // Allow only your frontend
+    origin: "https://finalblog-1.onrender.com", // Allow only your frontend
     methods: "GET,POST,PUT,DELETE",
     credentials: true, // Allow cookies if using authentication
   })
