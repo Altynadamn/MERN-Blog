@@ -28,10 +28,13 @@ app.use("/images",express.static(path.join(__dirname,"/images")))
 
 app.use(
   cors({
-    origin: "https://finalblog-1.onrender.com", 
-    credentials: true, 
+    origin: ["https://finalblog-1.onrender.com"], // Array format
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 
 
 app.use(cookieParser())
