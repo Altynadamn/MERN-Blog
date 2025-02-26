@@ -23,40 +23,28 @@ router.post("/register",async(req,res)=>{
 })
 
 
-
-router.post("/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        // Find user in database
-        const user = await User.findOne({ username });
-        if (!user) {
-            return res.status(401).json({ message: "User not found" });
+//LOGIN
+router.post("/login",async (req,res)=>{
+    try{
+        const user=await User.findOne({email:req.body.email})
+       
+        if(!user){
+            return res.status(404).json("User not found!")
         }
-
-        // Check password (assuming bcrypt for hashing)
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: "Invalid credentials" });
+        const match=await bcrypt.compare(req.body.password,user.password)
+        
+        if(!match){
+            return res.status(401).json("Wrong credentials!")
         }
+        const token=jwt.sign({_id:user._id,username:user.username,email:user.email},process.env.SECRET,{expiresIn:"3d"})
+        const {password,...info}=user._doc
+        res.cookie("token",token).status(200).json(info)
 
-        // Generate token
-        const token = jwt.sign({ userId: user._id }, process.env.SECRET, {
-            expiresIn: "7d",
-        });
-
-        // ✅ Set cookie correctly inside route handler
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: true, // Only use in production
-            sameSite: "None",
-        });
-
-        res.status(200).json({ message: "Login successful", user });
-    } catch (err) {
-        res.status(500).json({ message: "Internal server error", error: err });
     }
-});
+    catch(err){
+        res.status(500).json(err)
+    }
+})
 
 
 
@@ -71,19 +59,16 @@ router.get("/logout",async (req,res)=>{
     }
 })
 
-router.get("/refetch", (req, res) => {
-    const token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({ message: "No token provided" }); // Handle missing token
-    }
-
-    jwt.verify(token, process.env.SECRET, {}, async (err, data) => {
-        if (err) {
-            return res.status(403).json({ message: "Invalid token" }); // Use 403 for invalid token
+//REFETCH USER
+router.get("/refetch", (req,res)=>{
+    const token=req.cookies.token
+    jwt.verify(token,process.env.SECRET,{},async (err,data)=>{
+        if(err){
+            return res.status(404).json(err)
         }
-        res.status(200).json(data);
-    });
-});
+        res.status(200).json(data)
+    })
+})
 
 
 
