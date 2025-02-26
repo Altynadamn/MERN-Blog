@@ -1,76 +1,75 @@
-const express = require("express");
-const router = express.Router();
-const User = require("../models/User");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");  // 🔴 You forgot this
+const express=require('express')
+const router=express.Router()
+const User=require('../models/User')
+const bcrypt=require('bcrypt')
+const jwt=require('jsonwebtoken')
 
-router.use(cookieParser());  // 🔴 Middleware to enable cookies
 
-// REGISTER
-router.post("/register", async (req, res) => {
-    try {
-        const { username, email, password } = req.body;
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hashSync(password, salt);
-        const newUser = new User({ username, email, password: hashedPassword });
-        const savedUser = await newUser.save();
-        res.status(200).json(savedUser);
-    } catch (err) {
-        res.status(500).json(err);
+//REGISTER
+router.post("/register",async(req,res)=>{
+    try{
+        const {username,email,password}=req.body
+        const salt=await bcrypt.genSalt(10)
+        const hashedPassword=await bcrypt.hashSync(password,salt)
+        const newUser=new User({username,email,password:hashedPassword})
+        const savedUser=await newUser.save()
+        res.status(200).json(savedUser)
+
     }
-});
-
-// LOGIN
-router.post("/login", async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.body.email });
-        if (!user) return res.status(404).json("User not found!");
-
-        const match = await bcrypt.compare(req.body.password, user.password);
-        if (!match) return res.status(401).json("Wrong credentials!");
-
-        const token = jwt.sign(
-            { _id: user._id, username: user.username, email: user.email },
-            process.env.SECRET,
-            { expiresIn: "3d" }
-        );
-
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "None",  // ✅ Required for cross-domain cookies
-            path: "/",
-            maxAge: 3 * 24 * 60 * 60 * 1000, // ✅ 3 days expiration
-        }).status(200).json({ username: user.username, email: user.email });
-    } catch (err) {
-        res.status(500).json(err);
+    catch(err){
+        res.status(500).json(err)
     }
-});
 
-// LOGOUT
-router.get("/logout", async (req, res) => {
-    try {
-        res.clearCookie("token", { sameSite: "None", secure: true })
-            .status(200)
-            .json({ message: "User logged out successfully!" });
-    } catch (err) {
-        res.status(500).json(err);
+})
+
+
+//LOGIN
+router.post("/login",async (req,res)=>{
+    try{
+        const user=await User.findOne({email:req.body.email})
+       
+        if(!user){
+            return res.status(404).json("User not found!")
+        }
+        const match=await bcrypt.compare(req.body.password,user.password)
+        
+        if(!match){
+            return res.status(401).json("Wrong credentials!")
+        }
+        const token=jwt.sign({_id:user._id,username:user.username,email:user.email},process.env.SECRET,{expiresIn:"3d"})
+        const {password,...info}=user._doc
+        res.cookie("token",token).status(200).json(info)
+
     }
-});
-
-// REFETCH USER (Check Authentication)
-router.get("/refetch", async (req, res) => {
-    const token = req.cookies.token;
-    if (!token) return res.status(401).json("No token, authentication failed!");
-
-    jwt.verify(token, process.env.SECRET, {}, async (err, data) => {
-        if (err) return res.status(403).json("Invalid token!");
-
-        const user = await User.findById(data._id).select("-password"); // ✅ Exclude password
-        res.status(200).json(user);
-    });
-});
+    catch(err){
+        res.status(500).json(err)
+    }
+})
 
 
-module.exports = router;
+
+//LOGOUT
+router.get("/logout",async (req,res)=>{
+    try{
+        res.clearCookie("token",{sameSite:"none",secure:true}).status(200).send("User logged out successfully!")
+
+    }
+    catch(err){
+        res.status(500).json(err)
+    }
+})
+
+//REFETCH USER
+router.get("/refetch", (req,res)=>{
+    const token=req.cookies.token
+    jwt.verify(token,process.env.SECRET,{},async (err,data)=>{
+        if(err){
+            return res.status(404).json(err)
+        }
+        res.status(200).json(data)
+    })
+})
+
+
+
+module.exports=router
