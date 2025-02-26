@@ -25,31 +25,24 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found!" });
-        }
+        if (!user) return res.status(404).json("User not found!");
 
         const match = await bcrypt.compare(req.body.password, user.password);
+        if (!match) return res.status(401).json("Wrong credentials!");
 
-        if (!match) {
-            return res.status(401).json({ message: "Wrong credentials!" });
-        }
-
-        // Generate token
         const token = jwt.sign(
             { _id: user._id, username: user.username, email: user.email },
             process.env.SECRET,
             { expiresIn: "3d" }
         );
 
-        // Set secure cookie
         res.cookie("token", token, {
             httpOnly: true,
-            secure: true,    // Required for HTTPS
-            sameSite: "None" // Required for cross-origin cookies
+            secure: true,
+            sameSite: "None",  // ✅ Required for cross-domain cookies
+            path: "/",
+            maxAge: 3 * 24 * 60 * 60 * 1000, // ✅ 3 days expiration
         }).status(200).json({ username: user.username, email: user.email });
-
     } catch (err) {
         res.status(500).json(err);
     }
