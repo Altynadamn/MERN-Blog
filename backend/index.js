@@ -25,13 +25,11 @@ const connectDB=async()=>{
 dotenv.config()
 app.use(express.json())
 app.use("/images",express.static(path.join(__dirname,"/images")))
-const allowedOrigins = ["https://finalblog-1.onrender.com"];
 
 app.use(
   cors({
-    origin: "https://finalblog-1.onrender.com", // Allow only your frontend
-    methods: "GET,POST,PUT,DELETE",
-    credentials: true, // Allow cookies if using authentication
+    origin: "https://finalblog-1.onrender.com", 
+    credentials: true, 
   })
 );
 
