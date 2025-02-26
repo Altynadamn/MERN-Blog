@@ -60,21 +60,17 @@ router.get("/logout", async (req, res) => {
 });
 
 // REFETCH USER (Check Authentication)
-router.get("/refetch", (req, res) => {
-    console.log("Cookies received:", req.cookies);  // 🔴 Debugging cookies
-
+router.get("/refetch", async (req, res) => {
     const token = req.cookies.token;
-
-    if (!token) {
-        return res.status(401).json({ message: "No token provided" });
-    }
+    if (!token) return res.status(401).json("No token, authentication failed!");
 
     jwt.verify(token, process.env.SECRET, {}, async (err, data) => {
-        if (err) {
-            return res.status(403).json({ message: "Invalid token" });
-        }
-        res.status(200).json(data);
+        if (err) return res.status(403).json("Invalid token!");
+
+        const user = await User.findById(data._id).select("-password"); // ✅ Exclude password
+        res.status(200).json(user);
     });
 });
+
 
 module.exports = router;
