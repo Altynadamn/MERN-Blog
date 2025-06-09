@@ -11,7 +11,6 @@ const userRoute=require('./routes/users')
 const postRoute=require('./routes/posts')
 const commentRoute=require('./routes/comments')
 
-//database
 const connectDB=async()=>{
     try{
         await mongoose.connect(process.env.MONGO_URL)
@@ -26,10 +25,10 @@ dotenv.config()
 app.use(express.json())
 app.use("/images",express.static(path.join(__dirname,"/images")))
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", "https://finalblog-1.onrender.com"], // Allow multiple origins
+    origin: ["http://localhost:5173", "http://localhost:5174", "https://finalblog-1.onrender.com"], 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'], // or you can set this to '*'
-    credentials: true, // this is crucial for sending your cookies to the frontend
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    credentials: true, 
 }));
 
 app.use(cookieParser())
@@ -38,20 +37,17 @@ app.use("/api/users",userRoute)
 app.use("/api/posts",postRoute)
 app.use("/api/comments",commentRoute)
 
-//image upload
 const storage=multer.diskStorage({
     destination:(req,file,fn)=>{
         fn(null,"images")
     },
     filename:(req,file,fn)=>{
         fn(null,req.body.img)
-        // fn(null,"image1.jpg")
     }
 })
 
 const upload=multer({storage:storage})
 app.post("/api/upload",upload.single("file"),(req,res)=>{
-    // console.log(req.body)
     res.status(200).json("Image has been uploaded successfully!")
 })
 
